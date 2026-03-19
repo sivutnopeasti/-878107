@@ -13,6 +13,8 @@ interface Contract {
   name: string;
   description: string;
   value: number | null;
+  contractType: "FIXED" | "HOURLY";
+  hourlyRates: Record<string, number>;
   status: "ACTIVE" | "COMPLETED";
   createdAt: string;
 }
@@ -24,6 +26,7 @@ interface WorkHour {
   hours: number;
   date: string;
   description: string;
+  workType: "CUSTOMER" | "INTERNAL";
   createdAt: string;
 }
 
@@ -52,13 +55,24 @@ function ensureDir() {
   }
 }
 
+function migrate(data: Database): Database {
+  for (const c of data.contracts) {
+    if (!c.contractType) c.contractType = "FIXED";
+    if (!c.hourlyRates) c.hourlyRates = {};
+  }
+  for (const wh of data.workHours) {
+    if (!wh.workType) wh.workType = "CUSTOMER";
+  }
+  return data;
+}
+
 function read(): Database {
   ensureDir();
   if (!fs.existsSync(DB_PATH)) {
     fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_DB, null, 2));
     return structuredClone(DEFAULT_DB);
   }
-  return JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
+  return migrate(JSON.parse(fs.readFileSync(DB_PATH, "utf-8")));
 }
 
 function write(db: Database) {
@@ -67,7 +81,6 @@ function write(db: Database) {
 }
 
 export const db = {
-  // Users
   getUsers(): User[] {
     return read().users;
   },
@@ -96,11 +109,13 @@ export const db = {
     if (data.users[idx].role === "ADMIN") return false;
     data.users.splice(idx, 1);
     data.workHours = data.workHours.filter((wh) => wh.userId !== id);
+    for (const c of data.contracts) {
+      delete c.hourlyRates[String(id)];
+    }
     write(data);
     return true;
   },
 
-  // Contracts
   getContracts(): Contract[] {
     return read().contracts;
   },
@@ -112,6 +127,8 @@ export const db = {
       name,
       description,
       value: null,
+      contractType: "FIXED",
+      hourlyRates: {},
       status: "ACTIVE",
       createdAt: new Date().toISOString(),
     };
@@ -120,7 +137,7 @@ export const db = {
     return contract;
   },
 
-  updateContract(id: number, updates: Partial<Pick<Contract, "name" | "description" | "value" | "status">>): Contract | null {
+  updateContract(id: number, updates: Partial<Pick<Contract, "name" | "description" | "value" | "status" | "contractType" | "hourlyRates">>): Contract | null {
     const data = read();
     const contract = data.contracts.find((c) => c.id === id);
     if (!contract) return null;
@@ -128,6 +145,8 @@ export const db = {
     if (updates.description !== undefined) contract.description = updates.description;
     if (updates.value !== undefined) contract.value = updates.value;
     if (updates.status !== undefined) contract.status = updates.status;
+    if (updates.contractType !== undefined) contract.contractType = updates.contractType;
+    if (updates.hourlyRates !== undefined) contract.hourlyRates = { ...contract.hourlyRates, ...updates.hourlyRates };
     write(data);
     return contract;
   },
@@ -142,7 +161,6 @@ export const db = {
     return true;
   },
 
-  // Work Hours
   getWorkHours(filters?: { userId?: number; contractId?: number }): (WorkHour & { user: User; contract: Contract })[] {
     const data = read();
     let hours = data.workHours;
@@ -159,7 +177,7 @@ export const db = {
       .sort((a, b) => b.date.localeCompare(a.date));
   },
 
-  createWorkHour(userId: number, contractId: number, hours: number, date: string, description: string = ""): WorkHour | null {
+  createWorkHour(userId: number, contractId: number, hours: number, date: string, description: string = "", workType: "CUSTOMER" | "INTERNAL" = "CUSTOMER"): WorkHour | null {
     const data = read();
     if (!data.users.find((u) => u.id === userId)) return null;
     if (!data.contracts.find((c) => c.id === contractId)) return null;
@@ -171,11 +189,24 @@ export const db = {
       hours,
       date,
       description,
+      workType,
       createdAt: new Date().toISOString(),
     };
     data.workHours.push(workHour);
     write(data);
     return workHour;
+  },
+
+  updateWorkHour(id: number, updates: Partial<Pick<WorkHour, "hours" | "date" | "description" | "workType">>): WorkHour | null {
+    const data = read();
+    const wh = data.workHours.find((w) => w.id === id);
+    if (!wh) return null;
+    if (updates.hours !== undefined) wh.hours = updates.hours;
+    if (updates.date !== undefined) wh.date = updates.date;
+    if (updates.description !== undefined) wh.description = updates.description;
+    if (updates.workType !== undefined) wh.workType = updates.workType;
+    write(data);
+    return wh;
   },
 
   deleteWorkHour(id: number): boolean {

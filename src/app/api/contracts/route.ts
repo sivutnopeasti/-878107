@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const { id, name, description, value, status } = await request.json();
+  const { id, name, description, value, status, contractType, hourlyRates } = await request.json();
 
   if (!id) {
     return NextResponse.json({ error: "ID vaaditaan" }, { status: 400 });
@@ -32,6 +32,8 @@ export async function PUT(request: NextRequest) {
   if (description !== undefined) updates.description = description.trim();
   if (value !== undefined) updates.value = value === null ? null : Number(value);
   if (status !== undefined) updates.status = status;
+  if (contractType !== undefined) updates.contractType = contractType;
+  if (hourlyRates !== undefined) updates.hourlyRates = hourlyRates;
 
   const contract = db.updateContract(Number(id), updates);
   if (!contract) {
