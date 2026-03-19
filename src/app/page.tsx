@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [name, setName] = useState("");
@@ -47,32 +48,22 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-              <svg
-                className="w-8 h-8 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Pohjanmaan Viherrakennus
-            </h1>
-            <p className="text-gray-500 mt-1">Työhallintajärjestelmä</p>
+            <Image
+              src="/logo.svg"
+              alt="PMVR - Pohjanmaan Viherrakennus Oy"
+              width={280}
+              height={94}
+              className="mx-auto mb-4"
+              priority
+            />
+            <p className="text-[#1B5E20] mt-1 font-medium">Työhallintajärjestelmä</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-[#1B5E20] mb-1"
               >
                 Kirjaudu nimellä
               </label>
@@ -82,7 +73,7 @@ export default function LoginPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Syötä nimesi"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B5E20] focus:border-[#1B5E20] transition-colors"
                 required
               />
             </div>
@@ -96,7 +87,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#1B5E20] text-white py-3 rounded-lg font-medium hover:bg-[#145218] focus:ring-2 focus:ring-[#1B5E20] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Kirjaudutaan..." : "Kirjaudu"}
             </button>

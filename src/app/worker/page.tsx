@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface User {
   id: number;
@@ -155,14 +156,14 @@ export default function WorkerPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-green-700">
-              Pohjanmaan Viherrakennus
-            </h1>
-            <p className="text-sm text-gray-500">
-              Kirjautunut: <span className="font-medium">{user.name}</span>
-            </p>
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Image src="/logo.svg" alt="PMVR" width={120} height={40} priority />
+            <div className="border-l border-gray-200 pl-4">
+              <p className="text-sm text-gray-500">
+                Kirjautunut: <span className="font-medium text-[#1B5E20]">{user.name}</span>
+              </p>
+            </div>
           </div>
           <button
             onClick={handleLogout}
@@ -175,17 +176,17 @@ export default function WorkerPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">Lisää työtunteja</h2>
+          <h2 className="text-lg font-semibold text-[#1B5E20] mb-4">Lisää työtunteja</h2>
           <form onSubmit={handleAddHours} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[#1B5E20] mb-1">
                   Urakka
                 </label>
                 <select
                   value={selectedContract}
                   onChange={(e) => setSelectedContract(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B5E20] focus:border-[#1B5E20]"
                   required
                 >
                   <option value="">Valitse urakka...</option>
@@ -197,7 +198,7 @@ export default function WorkerPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[#1B5E20] mb-1">
                   Tunnit
                 </label>
                 <input
@@ -207,24 +208,24 @@ export default function WorkerPage() {
                   value={hours}
                   onChange={(e) => setHours(e.target.value)}
                   placeholder="esim. 7.5"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B5E20] focus:border-[#1B5E20]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[#1B5E20] mb-1">
                   Päivämäärä
                 </label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B5E20] focus:border-[#1B5E20]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[#1B5E20] mb-1">
                   Kuvaus (valinnainen)
                 </label>
                 <input
@@ -232,7 +233,7 @@ export default function WorkerPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Mitä teit?"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B5E20] focus:border-[#1B5E20]"
                 />
               </div>
             </div>
@@ -243,14 +244,14 @@ export default function WorkerPage() {
               </div>
             )}
             {message && (
-              <div className="bg-green-50 text-green-700 px-4 py-2 rounded-lg text-sm">
+              <div className="bg-[#E8F5E9] text-[#1B5E20] px-4 py-2 rounded-lg text-sm">
                 {message}
               </div>
             )}
 
             <button
               type="submit"
-              className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+              className="bg-[#1B5E20] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#145218] transition-colors"
             >
               Lisää tunnit
             </button>
@@ -258,7 +259,7 @@ export default function WorkerPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">Omat työtunnit</h2>
+          <h2 className="text-lg font-semibold text-[#1B5E20] mb-4">Omat työtunnit</h2>
 
           {Object.keys(groupedByContract).length === 0 ? (
             <p className="text-gray-500 text-sm">
@@ -278,7 +279,7 @@ export default function WorkerPage() {
                     >
                       <div className="bg-gray-50 px-4 py-3 flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium">{contract.name}</h3>
+                          <h3 className="font-medium text-[#1B5E20]">{contract.name}</h3>
                           <p className="text-sm text-gray-500">
                             Omat tunnit yhteensä:{" "}
                             <span className="font-medium">{myTotal} h</span>
@@ -286,7 +287,7 @@ export default function WorkerPage() {
                               <>
                                 {" "}
                                 &middot; Tuntipalkka:{" "}
-                                <span className="font-medium text-green-700">
+                                <span className="font-medium text-[#1B5E20]">
                                   {hourlyWage.toFixed(2)} €/h
                                 </span>
                               </>
