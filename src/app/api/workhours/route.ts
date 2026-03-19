@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { userId, contractId, hours, date, description } = await request.json();
+  const { userId, contractId, hours, date, description, workType } = await request.json();
 
   if (!userId || !contractId || !hours || !date) {
     return NextResponse.json(
@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
     Number(contractId),
     Number(hours),
     date,
-    description?.trim() || ""
+    description?.trim() || "",
+    workType || "CUSTOMER"
   );
 
   if (!workHour) {
@@ -47,6 +48,27 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(workHour, { status: 201 });
+}
+
+export async function PUT(request: NextRequest) {
+  const { id, hours, date, description, workType } = await request.json();
+
+  if (!id) {
+    return NextResponse.json({ error: "ID vaaditaan" }, { status: 400 });
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (hours !== undefined) updates.hours = Number(hours);
+  if (date !== undefined) updates.date = date;
+  if (description !== undefined) updates.description = description.trim();
+  if (workType !== undefined) updates.workType = workType;
+
+  const workHour = db.updateWorkHour(Number(id), updates);
+  if (!workHour) {
+    return NextResponse.json({ error: "Työtuntia ei löydy" }, { status: 404 });
+  }
+
+  return NextResponse.json(workHour);
 }
 
 export async function DELETE(request: NextRequest) {
