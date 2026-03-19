@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -6,25 +6,16 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get("userId");
   const contractId = searchParams.get("contractId");
 
-  const where: Record<string, unknown> = {};
-  if (userId) where.userId = Number(userId);
-  if (contractId) where.contractId = Number(contractId);
+  const filters: { userId?: number; contractId?: number } = {};
+  if (userId) filters.userId = Number(userId);
+  if (contractId) filters.contractId = Number(contractId);
 
-  const workHours = await prisma.workHour.findMany({
-    where,
-    include: {
-      user: true,
-      contract: true,
-    },
-    orderBy: { date: "desc" },
-  });
-
+  const workHours = db.getWorkHours(filters);
   return NextResponse.json(workHours);
 }
 
 export async function POST(request: NextRequest) {
-  const { userId, contractId, hours, date, description } =
-    await request.json();
+  const { userId, contractId, hours, date, description } = await request.json();
 
   if (!userId || !contractId || !hours || !date) {
     return NextResponse.json(
@@ -40,19 +31,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const workHour = await prisma.workHour.create({
-    data: {
-      userId: Number(userId),
-      contractId: Number(contractId),
-      hours: Number(hours),
-      date,
-      description: description?.trim() || "",
-    },
-    include: {
-      user: true,
-      contract: true,
-    },
-  });
+  const workHour = db.createWorkHour(
+    Number(userId),
+    Number(contractId),
+    Number(hours),
+    date,
+    description?.trim() || ""
+  );
+
+  if (!workHour) {
+    return NextResponse.json(
+      { error: "Käyttäjää tai urakkaa ei löydy" },
+      { status: 404 }
+    );
+  }
 
   return NextResponse.json(workHour, { status: 201 });
 }
@@ -65,6 +57,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "ID vaaditaan" }, { status: 400 });
   }
 
-  await prisma.workHour.delete({ where: { id: Number(id) } });
+  db.deleteWorkHour(Number(id));
   return NextResponse.json({ success: true });
 }

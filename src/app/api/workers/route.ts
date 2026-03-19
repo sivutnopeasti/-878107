@@ -1,10 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
-  const workers = await prisma.user.findMany({
-    orderBy: { name: "asc" },
-  });
+  const workers = db.getUsers().sort((a, b) => a.name.localeCompare(b.name));
   return NextResponse.json(workers);
 }
 
@@ -15,10 +13,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Nimi vaaditaan" }, { status: 400 });
   }
 
-  const existing = await prisma.user.findUnique({
-    where: { name: name.trim() },
-  });
-
+  const existing = db.getUserByName(name.trim());
   if (existing) {
     return NextResponse.json(
       { error: "Tämän niminen käyttäjä on jo olemassa" },
@@ -26,10 +21,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const worker = await prisma.user.create({
-    data: { name: name.trim(), role: "WORKER" },
-  });
-
+  const worker = db.createUser(name.trim(), "WORKER");
   return NextResponse.json(worker, { status: 201 });
 }
 
@@ -41,20 +33,13 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "ID vaaditaan" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: Number(id) } });
-  if (!user) {
+  const success = db.deleteUser(Number(id));
+  if (!success) {
     return NextResponse.json(
-      { error: "Käyttäjää ei löydy" },
-      { status: 404 }
-    );
-  }
-  if (user.role === "ADMIN") {
-    return NextResponse.json(
-      { error: "Admin-käyttäjää ei voi poistaa" },
-      { status: 403 }
+      { error: "Käyttäjää ei voi poistaa" },
+      { status: 400 }
     );
   }
 
-  await prisma.user.delete({ where: { id: Number(id) } });
   return NextResponse.json({ success: true });
 }
