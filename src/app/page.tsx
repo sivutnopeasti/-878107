@@ -1,12 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 export default function LoginPage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      try {
+        const u = JSON.parse(stored);
+        if (u.name) {
+          fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: u.name }),
+          })
+            .then((res) => {
+              if (res.ok) return res.json();
+              throw new Error();
+            })
+            .then((data) => {
+              localStorage.setItem("user", JSON.stringify(data));
+              router.push(data.role === "ADMIN" ? "/admin" : "/worker");
+            })
+            .catch(() => {
+              localStorage.removeItem("user");
+              setChecking(false);
+            });
+          return;
+        }
+      } catch { /* ignore */ }
+    }
+    setChecking(false);
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +72,14 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
+        <div className="text-[#1B5E20] text-sm">Kirjaudutaan...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
