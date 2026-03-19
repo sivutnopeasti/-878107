@@ -132,7 +132,8 @@ export default function WorkerPage() {
 
   const calculateHourlyWage = (contract: WorkHourEntry["contract"]) => {
     if (contract.contractType === "HOURLY") {
-      return contract.hourlyRates[String(user!.id)] || 40;
+      const defaultRate = contract.hourlyRates["default"] || 40;
+      return contract.hourlyRates[String(user!.id)] || defaultRate;
     }
     if (!contract.value) return null;
     const allContractData = contracts.find((c) => c.id === contract.id);

@@ -113,6 +113,19 @@ export default function AdminPage() {
     fetchContracts();
   };
 
+  const handleSetDefaultRate = async (contractId: number) => {
+    const rate = Number(editValue);
+    if (isNaN(rate) || rate <= 0) return;
+    await fetch("/api/contracts", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: contractId, hourlyRates: { default: rate } }),
+    });
+    setEditingValueId(null); setEditValue("");
+    showMsg("Oletustuntihinta päivitetty!");
+    fetchContracts();
+  };
+
   const handleSetHourlyRate = async (contractId: number, userId: string) => {
     const rate = Number(editRate);
     if (isNaN(rate) || rate <= 0) return;
@@ -164,7 +177,9 @@ export default function AdminPage() {
     contract.workHours.filter((h) => !type || h.workType === type).reduce((sum, h) => sum + h.hours, 0);
 
   const hourlyWageForContract = (contract: Contract) => {
-    if (contract.contractType === "HOURLY") return null;
+    if (contract.contractType === "HOURLY") {
+      return contract.hourlyRates["default"] || 40;
+    }
     if (!contract.value) return null;
     const total = totalHoursForContract(contract, "CUSTOMER");
     if (total === 0) return null;
@@ -255,16 +270,10 @@ export default function AdminPage() {
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${contract.status === "ACTIVE" ? "bg-[#E8F5E9] text-[#1B5E20]" : "bg-gray-100 text-gray-600"}`}>
                                 {contract.status === "ACTIVE" ? "Aktiivinen" : "Valmis"}
                               </span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${contract.contractType === "HOURLY" ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700"}`}>
-                                {contract.contractType === "HOURLY" ? "Tuntityö" : "Kiinteähintainen"}
-                              </span>
                             </div>
                             {contract.description && <p className="text-sm text-gray-500 mt-1">{contract.description}</p>}
                           </div>
                           <div className="flex gap-2 flex-wrap justify-end">
-                            <button onClick={() => handleToggleContractType(contract)} className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 rounded hover:bg-blue-50">
-                              {contract.contractType === "HOURLY" ? "→ Kiinteä" : "→ Tuntityö"}
-                            </button>
                             <button onClick={() => handleToggleStatus(contract)} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100">
                               {contract.status === "ACTIVE" ? "Merkitse valmiiksi" : "Aktivoi"}
                             </button>
@@ -272,6 +281,23 @@ export default function AdminPage() {
                               Poista
                             </button>
                           </div>
+                        </div>
+
+                        <div className="mt-4 flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <label className="flex items-center gap-2 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={contract.contractType === "HOURLY"}
+                              onChange={() => handleToggleContractType(contract)}
+                              className="w-4 h-4 rounded border-gray-300 text-[#1B5E20] focus:ring-[#1B5E20] cursor-pointer"
+                            />
+                            <span className="text-sm font-medium text-gray-700">Tuntityö</span>
+                          </label>
+                          {contract.contractType === "HOURLY" ? (
+                            <span className="text-xs text-gray-500">Jokaisella työntekijällä oma tuntihinta (oletus 40 €/h)</span>
+                          ) : (
+                            <span className="text-xs text-gray-500">Kiinteähintainen urakka</span>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
@@ -294,9 +320,22 @@ export default function AdminPage() {
                               )}
                             </div>
                           ) : (
-                            <div className="bg-blue-50 rounded-lg p-3">
-                              <p className="text-xs text-blue-600 uppercase tracking-wide">Tuntityö</p>
-                              <p className="text-sm text-blue-700 mt-1">Oletus: 40 €/h per työntekijä</p>
+                            <div className="bg-gray-50 rounded-lg p-3">
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Oletustuntihinta</p>
+                              {editingValueId === contract.id ? (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <input type="number" step="0.5" value={editValue} onChange={(e) => setEditValue(e.target.value)}
+                                    placeholder="€/h" className="w-24 px-2 py-1 text-sm border border-gray-300 rounded" autoFocus />
+                                  <button onClick={() => { handleSetDefaultRate(contract.id); }} className="text-xs text-[#1B5E20] hover:text-[#145218] font-medium">Tallenna</button>
+                                  <button onClick={() => { setEditingValueId(null); setEditValue(""); }} className="text-xs text-gray-400 hover:text-gray-600">Peruuta</button>
+                                </div>
+                              ) : (
+                                <p className="text-lg font-semibold mt-1 cursor-pointer hover:text-[#1B5E20]"
+                                  onClick={() => { setEditingValueId(contract.id); setEditValue(String(contract.hourlyRates["default"] || 40)); }}>
+                                  {contract.hourlyRates["default"] || 40} €/h
+                                  <span className="text-xs text-gray-400 ml-1">(muokkaa)</span>
+                                </p>
+                              )}
                             </div>
                           )}
                           <div className="bg-gray-50 rounded-lg p-3">
@@ -306,46 +345,47 @@ export default function AdminPage() {
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3">
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Tuntipalkka</p>
-                            {contract.contractType === "HOURLY" ? (
-                              <p className="text-lg font-semibold mt-1 text-blue-700">per työntekijä</p>
-                            ) : (
-                              <p className="text-lg font-semibold mt-1 text-[#1B5E20]">{wage ? `${wage.toFixed(2)} €/h` : "–"}</p>
-                            )}
+                            <p className="text-lg font-semibold mt-1 text-[#1B5E20]">{wage ? `${wage.toFixed(2)} €/h` : "–"}</p>
                           </div>
                         </div>
 
                         {workerBreakdown.length > 0 && (
                           <div className="mt-4">
                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Tunnit työntekijöittäin</p>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="space-y-2">
                               {workerBreakdown.map((w) => {
-                                const workerWage = contract.contractType === "HOURLY"
-                                  ? (contract.hourlyRates[String(w.id)] || 40)
+                                const defaultRate = contract.hourlyRates["default"] || 40;
+                                const workerRate = contract.contractType === "HOURLY"
+                                  ? (contract.hourlyRates[String(w.id)] || defaultRate)
                                   : wage;
                                 const rateKey = `${contract.id}-${w.id}`;
                                 return (
-                                  <div key={w.id} className="text-xs bg-[#E8F5E9] text-[#1B5E20] px-3 py-2 rounded">
-                                    <span className="font-medium">{w.name}</span>: {w.customer} h asiakas
-                                    {w.internal > 0 && <span className="text-orange-600"> + {w.internal} h sisäinen</span>}
-                                    {workerWage && w.customer > 0 && (
-                                      <span className="text-[#2E7D32] ml-1">({(w.customer * workerWage).toFixed(2)} €)</span>
-                                    )}
+                                  <div key={w.id} className="flex items-center justify-between bg-[#E8F5E9] text-[#1B5E20] px-4 py-2 rounded-lg text-sm">
+                                    <div>
+                                      <span className="font-medium">{w.name}</span>
+                                      <span className="text-gray-600 ml-2">{w.customer} h asiakas</span>
+                                      {w.internal > 0 && <span className="text-orange-600 ml-1">+ {w.internal} h sisäinen</span>}
+                                      {workerRate && w.customer > 0 && (
+                                        <span className="text-[#2E7D32] ml-2 font-medium">= {(w.customer * workerRate).toFixed(2)} €</span>
+                                      )}
+                                    </div>
                                     {contract.contractType === "HOURLY" && (
-                                      <>
+                                      <div className="flex items-center gap-1">
                                         {editingRateId === rateKey ? (
-                                          <span className="ml-2">
+                                          <>
                                             <input type="number" step="0.5" value={editRate} onChange={(e) => setEditRate(e.target.value)}
-                                              className="w-16 px-1 py-0.5 border border-gray-300 rounded text-xs" autoFocus />
-                                            <button onClick={() => handleSetHourlyRate(contract.id, String(w.id))} className="ml-1 text-[#1B5E20] font-medium">OK</button>
-                                            <button onClick={() => setEditingRateId(null)} className="ml-1 text-gray-400">×</button>
-                                          </span>
+                                              className="w-20 px-2 py-1 border border-gray-300 rounded text-sm" autoFocus />
+                                            <span className="text-xs text-gray-500">€/h</span>
+                                            <button onClick={() => handleSetHourlyRate(contract.id, String(w.id))} className="ml-1 text-xs text-[#1B5E20] font-medium hover:bg-white px-2 py-1 rounded">OK</button>
+                                            <button onClick={() => setEditingRateId(null)} className="text-xs text-gray-400 hover:text-gray-600 px-1">×</button>
+                                          </>
                                         ) : (
-                                          <button onClick={() => { setEditingRateId(rateKey); setEditRate(String(contract.hourlyRates[String(w.id)] || 40)); }}
-                                            className="ml-2 text-blue-600 hover:text-blue-700 underline">
-                                            {contract.hourlyRates[String(w.id)] || 40} €/h
+                                          <button onClick={() => { setEditingRateId(rateKey); setEditRate(String(contract.hourlyRates[String(w.id)] || defaultRate)); }}
+                                            className="text-sm text-[#1B5E20] hover:bg-white px-3 py-1 rounded border border-[#1B5E20]/20">
+                                            {contract.hourlyRates[String(w.id)] || defaultRate} €/h
                                           </button>
                                         )}
-                                      </>
+                                      </div>
                                     )}
                                   </div>
                                 );
