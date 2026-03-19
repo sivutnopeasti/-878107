@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -8,9 +8,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Nimi vaaditaan" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { name: name.trim() },
-  });
+  const user = db.getUserByName(name.trim());
 
   if (!user) {
     return NextResponse.json(

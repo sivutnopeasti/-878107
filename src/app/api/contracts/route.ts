@@ -1,15 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
-  const contracts = await prisma.contract.findMany({
-    include: {
-      workHours: {
-        include: { user: true },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const contracts = db.getContractsWithHours();
   return NextResponse.json(contracts);
 }
 
@@ -23,13 +16,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const contract = await prisma.contract.create({
-    data: {
-      name: name.trim(),
-      description: description?.trim() || "",
-    },
-  });
-
+  const contract = db.createContract(name.trim(), description?.trim() || "");
   return NextResponse.json(contract, { status: 201 });
 }
 
@@ -40,16 +27,16 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "ID vaaditaan" }, { status: 400 });
   }
 
-  const data: Record<string, unknown> = {};
-  if (name !== undefined) data.name = name.trim();
-  if (description !== undefined) data.description = description.trim();
-  if (value !== undefined) data.value = value === null ? null : Number(value);
-  if (status !== undefined) data.status = status;
+  const updates: Record<string, unknown> = {};
+  if (name !== undefined) updates.name = name.trim();
+  if (description !== undefined) updates.description = description.trim();
+  if (value !== undefined) updates.value = value === null ? null : Number(value);
+  if (status !== undefined) updates.status = status;
 
-  const contract = await prisma.contract.update({
-    where: { id: Number(id) },
-    data,
-  });
+  const contract = db.updateContract(Number(id), updates);
+  if (!contract) {
+    return NextResponse.json({ error: "Urakkaa ei löydy" }, { status: 404 });
+  }
 
   return NextResponse.json(contract);
 }
@@ -62,6 +49,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "ID vaaditaan" }, { status: 400 });
   }
 
-  await prisma.contract.delete({ where: { id: Number(id) } });
+  db.deleteContract(Number(id));
   return NextResponse.json({ success: true });
 }
