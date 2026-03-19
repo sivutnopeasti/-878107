@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  role      String     @default("WORKER") // ADMIN or WORKER
+  createdAt DateTime   @default(now())
+  workHours WorkHour[]
+}
+
+model Contract {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String     @default("")
+  value       Float?
+  status      String     @default("ACTIVE") // ACTIVE or COMPLETED
+  createdAt   DateTime   @default(now())
+  workHours   WorkHour[]
+}
+
+model WorkHour {
+  id          Int      @id @default(autoincrement())
+  hours       Float
+  date        String
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  userId      Int
+  contractId  Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
