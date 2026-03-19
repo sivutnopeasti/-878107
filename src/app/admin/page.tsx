@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface User {
   id: number;
@@ -35,17 +36,11 @@ export default function AdminPage() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [workers, setWorkers] = useState<User[]>([]);
 
-  // Contract form
   const [newContractName, setNewContractName] = useState("");
   const [newContractDesc, setNewContractDesc] = useState("");
-
-  // Worker form
   const [newWorkerName, setNewWorkerName] = useState("");
-
-  // Value editing
   const [editingValueId, setEditingValueId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
-
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -204,12 +199,12 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-green-700">
-              Pohjanmaan Viherrakennus
-            </h1>
-            <p className="text-sm text-gray-500">Admin-hallinta</p>
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Image src="/logo.svg" alt="PMVR" width={120} height={40} priority />
+            <div className="border-l border-gray-200 pl-4">
+              <p className="text-sm text-[#1B5E20] font-medium">Admin-hallinta</p>
+            </div>
           </div>
           <button
             onClick={handleLogout}
@@ -222,7 +217,7 @@ export default function AdminPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         {message && (
-          <div className="mb-4 bg-green-50 text-green-700 px-4 py-2 rounded-lg text-sm">
+          <div className="mb-4 bg-[#E8F5E9] text-[#1B5E20] px-4 py-2 rounded-lg text-sm">
             {message}
           </div>
         )}
@@ -239,7 +234,7 @@ export default function AdminPage() {
               onClick={() => setTab(t.key)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 tab === t.key
-                  ? "bg-green-600 text-white"
+                  ? "bg-[#1B5E20] text-white"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
             >
@@ -251,7 +246,7 @@ export default function AdminPage() {
         {tab === "contracts" && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold mb-4">Lisää uusi urakka</h2>
+              <h2 className="text-lg font-semibold text-[#1B5E20] mb-4">Lisää uusi urakka</h2>
               <form
                 onSubmit={handleAddContract}
                 className="flex flex-col sm:flex-row gap-3"
@@ -261,7 +256,7 @@ export default function AdminPage() {
                   value={newContractName}
                   onChange={(e) => setNewContractName(e.target.value)}
                   placeholder="Urakan nimi"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B5E20] focus:border-[#1B5E20]"
                   required
                 />
                 <input
@@ -269,11 +264,11 @@ export default function AdminPage() {
                   value={newContractDesc}
                   onChange={(e) => setNewContractDesc(e.target.value)}
                   placeholder="Kuvaus (valinnainen)"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B5E20] focus:border-[#1B5E20]"
                 />
                 <button
                   type="submit"
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
+                  className="bg-[#1B5E20] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#145218] transition-colors whitespace-nowrap"
                 >
                   Lisää urakka
                 </button>
@@ -300,13 +295,13 @@ export default function AdminPage() {
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex items-center gap-2">
-                              <h3 className="text-lg font-semibold">
+                              <h3 className="text-lg font-semibold text-[#1B5E20]">
                                 {contract.name}
                               </h3>
                               <span
                                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                   contract.status === "ACTIVE"
-                                    ? "bg-green-100 text-green-700"
+                                    ? "bg-[#E8F5E9] text-[#1B5E20]"
                                     : "bg-gray-100 text-gray-600"
                                 }`}
                               >
@@ -363,7 +358,7 @@ export default function AdminPage() {
                                   onClick={() =>
                                     handleSetValue(contract.id)
                                   }
-                                  className="text-xs text-green-600 hover:text-green-700 font-medium"
+                                  className="text-xs text-[#1B5E20] hover:text-[#145218] font-medium"
                                 >
                                   Tallenna
                                 </button>
@@ -379,7 +374,7 @@ export default function AdminPage() {
                               </div>
                             ) : (
                               <p
-                                className="text-lg font-semibold mt-1 cursor-pointer hover:text-green-600"
+                                className="text-lg font-semibold mt-1 cursor-pointer hover:text-[#1B5E20]"
                                 onClick={() => {
                                   setEditingValueId(contract.id);
                                   setEditValue(
@@ -408,7 +403,7 @@ export default function AdminPage() {
                             <p className="text-xs text-gray-500 uppercase tracking-wide">
                               Tuntipalkka
                             </p>
-                            <p className="text-lg font-semibold mt-1 text-green-700">
+                            <p className="text-lg font-semibold mt-1 text-[#1B5E20]">
                               {wage
                                 ? `${wage.toFixed(2)} €/h`
                                 : "–"}
@@ -425,11 +420,11 @@ export default function AdminPage() {
                               {workerBreakdown.map((w) => (
                                 <span
                                   key={w.name}
-                                  className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded"
+                                  className="text-xs bg-[#E8F5E9] text-[#1B5E20] px-2 py-1 rounded"
                                 >
                                   {w.name}: {w.total} h
                                   {wage && (
-                                    <span className="text-blue-500 ml-1">
+                                    <span className="text-[#2E7D32] ml-1">
                                       ({(w.total * wage).toFixed(2)} €)
                                     </span>
                                   )}
@@ -450,7 +445,7 @@ export default function AdminPage() {
         {tab === "workers" && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold mb-4">
+              <h2 className="text-lg font-semibold text-[#1B5E20] mb-4">
                 Lisää uusi työntekijä
               </h2>
               <form
@@ -462,12 +457,12 @@ export default function AdminPage() {
                   value={newWorkerName}
                   onChange={(e) => setNewWorkerName(e.target.value)}
                   placeholder="Työntekijän nimi"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B5E20] focus:border-[#1B5E20]"
                   required
                 />
                 <button
                   type="submit"
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
+                  className="bg-[#1B5E20] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#145218] transition-colors whitespace-nowrap"
                 >
                   Lisää työntekijä
                 </button>
@@ -498,7 +493,7 @@ export default function AdminPage() {
                           className={`text-xs px-2 py-0.5 rounded-full ${
                             w.role === "ADMIN"
                               ? "bg-purple-100 text-purple-700"
-                              : "bg-blue-100 text-blue-700"
+                              : "bg-[#E8F5E9] text-[#1B5E20]"
                           }`}
                         >
                           {w.role === "ADMIN" ? "Admin" : "Työntekijä"}
@@ -525,7 +520,7 @@ export default function AdminPage() {
         {tab === "hours" && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold">Kaikki työtunnit</h2>
+              <h2 className="text-lg font-semibold text-[#1B5E20]">Kaikki työtunnit</h2>
             </div>
             {contracts.flatMap((c) => c.workHours).length === 0 ? (
               <div className="p-6 text-center text-gray-500 text-sm">
