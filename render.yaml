@@ -2,7 +2,6 @@ services:
   - type: web
     name: pohjanmaan-viherrakennus
     runtime: node
-    nodeVersion: "22"
     plan: free
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
