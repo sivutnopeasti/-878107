@@ -12,13 +12,26 @@ Työntekijöiden työhallintajärjestelmä, jolla hallitaan urakoita, työtuntej
 ## Teknologiat
 
 - [Next.js](https://nextjs.org/) (App Router)
-- [Prisma](https://www.prisma.io/) + SQLite
+- [Prisma](https://www.prisma.io/) + PostgreSQL
 - [Tailwind CSS](https://tailwindcss.com/)
 - TypeScript
 
-## Asennus ja käynnistys
+## Deploy Renderiin
+
+1. Luo tili osoitteessa [render.com](https://render.com)
+2. Valitse **New > Blueprint** ja yhdistä tämä GitHub-repo
+3. Render lukee `render.yaml`-tiedoston ja luo automaattisesti:
+   - PostgreSQL-tietokannan
+   - Web-palvelun
+4. Admin-käyttäjä luodaan automaattisesti deployn yhteydessä
+
+## Paikallinen kehitys
 
 ```bash
+# Kopioi ympäristömuuttujat
+cp .env.example .env
+# Muokkaa .env-tiedostoon oma PostgreSQL-osoite
+
 # Asenna riippuvuudet
 npm install
 
