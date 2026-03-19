@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-
 export default function LoginPage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -48,13 +46,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <Image
-              src="/logo.svg"
+            <img
+              src="https://i.ibb.co/MkxWBYN8/pmvr-logo.png"
               alt="PMVR - Pohjanmaan Viherrakennus Oy"
-              width={280}
-              height={94}
-              className="mx-auto mb-4"
-              priority
+              className="mx-auto mb-4 h-24 w-auto"
             />
             <p className="text-[#1B5E20] mt-1 font-medium">Työhallintajärjestelmä</p>
           </div>

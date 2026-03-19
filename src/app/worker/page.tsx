@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 interface User {
   id: number;
@@ -158,7 +157,7 @@ export default function WorkerPage() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Image src="/logo.svg" alt="PMVR" width={120} height={40} priority />
+            <img src="https://i.ibb.co/MkxWBYN8/pmvr-logo.png" alt="PMVR" className="h-10 w-auto" />
             <div className="border-l border-gray-200 pl-4">
               <p className="text-sm text-gray-500">
                 Kirjautunut: <span className="font-medium text-[#1B5E20]">{user.name}</span>
