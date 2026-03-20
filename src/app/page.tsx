@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [dbError, setDbError] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,6 +20,7 @@ export default function LoginPage() {
         if (u.name) {
           const timeout = setTimeout(() => {
             localStorage.removeItem("user");
+            setDbError(true);
             setChecking(false);
           }, 5000);
 
@@ -68,7 +70,14 @@ export default function LoginPage() {
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
-        <div className="text-[#1B5E20] text-sm">Kirjaudutaan...</div>
+        <div className="text-center">
+          <div className="text-[#1B5E20] text-sm">Kirjaudutaan...</div>
+          {dbError && (
+            <div className="mt-4 bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm max-w-sm">
+              Yhteysvirhe tietokantaan. Tarkista Supabase-asetukset.
+            </div>
+          )}
+        </div>
       </div>
     );
   }
