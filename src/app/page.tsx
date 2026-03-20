@@ -17,8 +17,14 @@ export default function LoginPage() {
       try {
         const u = JSON.parse(stored);
         if (u.name) {
+          const timeout = setTimeout(() => {
+            localStorage.removeItem("user");
+            setChecking(false);
+          }, 5000);
+
           api.login(u.name)
             .then((data) => {
+              clearTimeout(timeout);
               if (data) {
                 localStorage.setItem("user", JSON.stringify(data));
                 router.push(data.role === "ADMIN" ? "/admin" : "/worker");
@@ -28,6 +34,7 @@ export default function LoginPage() {
               }
             })
             .catch(() => {
+              clearTimeout(timeout);
               localStorage.removeItem("user");
               setChecking(false);
             });
