@@ -2,32 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-
-interface User {
-  id: number;
-  name: string;
-  role: string;
-}
-
-interface WorkHourEntry {
-  id: number;
-  hours: number;
-  date: string;
-  description: string;
-  workType: string;
-  user: { id: number; name: string };
-}
-
-interface Contract {
-  id: number;
-  name: string;
-  description: string;
-  value: number | null;
-  contractType: string;
-  hourlyRates: Record<string, number>;
-  status: string;
-  workHours: WorkHourEntry[];
-}
+import { api, User, Contract } from "@/lib/api";
 
 type Tab = "contracts" | "workers" | "hours";
 
@@ -49,13 +24,11 @@ export default function AdminPage() {
   const [error, setError] = useState("");
 
   const fetchContracts = useCallback(async () => {
-    const res = await fetch("/api/contracts");
-    setContracts(await res.json());
+    setContracts(await api.getContracts());
   }, []);
 
   const fetchWorkers = useCallback(async () => {
-    const res = await fetch("/api/workers");
-    setWorkers(await res.json());
+    setWorkers(await api.getWorkers());
   }, []);
 
   useEffect(() => {
@@ -74,41 +47,33 @@ export default function AdminPage() {
   const handleAddContract = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newContractName.trim()) return;
-    const res = await fetch("/api/contracts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newContractName, description: newContractDesc }),
-    });
-    if (res.ok) { showMsg("Urakka lisätty!"); setNewContractName(""); setNewContractDesc(""); fetchContracts(); }
-    else showErr((await res.json()).error);
+    const result = await api.createContract(newContractName, newContractDesc);
+    if (result.error) { showErr(result.error); return; }
+    showMsg("Urakka lisätty!");
+    setNewContractName("");
+    setNewContractDesc("");
+    fetchContracts();
   };
 
   const handleDeleteContract = async (id: number) => {
     if (!confirm("Haluatko varmasti poistaa tämän urakan ja kaikki sen työtunnit?")) return;
-    await fetch(`/api/contracts?id=${id}`, { method: "DELETE" });
+    await api.deleteContract(id);
     showMsg("Urakka poistettu");
     fetchContracts();
   };
 
   const handleSetValue = async (id: number) => {
     const value = editValue === "" ? null : Number(editValue);
-    await fetch("/api/contracts", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, value }),
-    });
-    setEditingValueId(null); setEditValue("");
+    await api.updateContract(id, { value });
+    setEditingValueId(null);
+    setEditValue("");
     showMsg("Urakan arvo päivitetty!");
     fetchContracts();
   };
 
   const handleToggleContractType = async (contract: Contract) => {
     const newType = contract.contractType === "FIXED" ? "HOURLY" : "FIXED";
-    await fetch("/api/contracts", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: contract.id, contractType: newType }),
-    });
+    await api.updateContract(contract.id, { contractType: newType });
     showMsg(newType === "HOURLY" ? "Vaihdettu tuntityöksi" : "Vaihdettu kiinteähintaiseksi");
     fetchContracts();
   };
@@ -116,12 +81,9 @@ export default function AdminPage() {
   const handleSetDefaultRate = async (contractId: number) => {
     const rate = Number(editValue);
     if (isNaN(rate) || rate <= 0) return;
-    await fetch("/api/contracts", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: contractId, hourlyRates: { default: rate } }),
-    });
-    setEditingValueId(null); setEditValue("");
+    await api.updateContract(contractId, { hourlyRates: { default: rate } });
+    setEditingValueId(null);
+    setEditValue("");
     showMsg("Oletustuntihinta päivitetty!");
     fetchContracts();
   };
@@ -129,23 +91,16 @@ export default function AdminPage() {
   const handleSetHourlyRate = async (contractId: number, userId: string) => {
     const rate = Number(editRate);
     if (isNaN(rate) || rate <= 0) return;
-    await fetch("/api/contracts", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: contractId, hourlyRates: { [userId]: rate } }),
-    });
-    setEditingRateId(null); setEditRate("");
+    await api.updateContract(contractId, { hourlyRates: { [userId]: rate } });
+    setEditingRateId(null);
+    setEditRate("");
     showMsg("Tuntihinta päivitetty!");
     fetchContracts();
   };
 
   const handleToggleStatus = async (contract: Contract) => {
     const newStatus = contract.status === "ACTIVE" ? "COMPLETED" : "ACTIVE";
-    await fetch("/api/contracts", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: contract.id, status: newStatus }),
-    });
+    await api.updateContract(contract.id, { status: newStatus });
     showMsg(`Urakka merkitty ${newStatus === "COMPLETED" ? "valmiiksi" : "aktiiviseksi"}`);
     fetchContracts();
   };
@@ -153,20 +108,19 @@ export default function AdminPage() {
   const handleAddWorker = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWorkerName.trim()) return;
-    const res = await fetch("/api/workers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newWorkerName }),
-    });
-    if (res.ok) { showMsg("Työntekijä lisätty!"); setNewWorkerName(""); fetchWorkers(); }
-    else showErr((await res.json()).error);
+    const result = await api.createWorker(newWorkerName);
+    if (result.error) { showErr(result.error); return; }
+    showMsg("Työntekijä lisätty!");
+    setNewWorkerName("");
+    fetchWorkers();
   };
 
   const handleDeleteWorker = async (id: number) => {
     if (!confirm("Haluatko varmasti poistaa tämän työntekijän ja kaikki hänen työtuntinsa?")) return;
-    await fetch(`/api/workers?id=${id}`, { method: "DELETE" });
+    await api.deleteWorker(id);
     showMsg("Työntekijä poistettu");
-    fetchWorkers(); fetchContracts();
+    fetchWorkers();
+    fetchContracts();
   };
 
   const handleLogout = () => { localStorage.removeItem("user"); router.push("/"); };
@@ -196,7 +150,16 @@ export default function AdminPage() {
     return Object.values(grouped);
   };
 
-  const allHours = contracts.flatMap((c) => c.workHours.map((h) => ({ ...h, contractName: c.name, contractType: c.contractType, contractValue: c.value, contractHourlyRates: c.hourlyRates, contractTotalCustomerHours: totalHoursForContract(c, "CUSTOMER") })));
+  const allHours = contracts.flatMap((c) =>
+    c.workHours.map((h) => ({
+      ...h,
+      contractName: c.name,
+      contractType: c.contractType,
+      contractValue: c.value,
+      contractHourlyRates: c.hourlyRates,
+      contractTotalCustomerHours: totalHoursForContract(c, "CUSTOMER"),
+    }))
+  );
   const customerHours = allHours.filter((h) => h.workType === "CUSTOMER");
   const internalHours = allHours.filter((h) => h.workType === "INTERNAL");
 
@@ -326,7 +289,7 @@ export default function AdminPage() {
                                 <div className="flex items-center gap-2 mt-1">
                                   <input type="number" step="0.5" value={editValue} onChange={(e) => setEditValue(e.target.value)}
                                     placeholder="€/h" className="w-24 px-2 py-1 text-sm border border-gray-300 rounded" autoFocus />
-                                  <button onClick={() => { handleSetDefaultRate(contract.id); }} className="text-xs text-[#1B5E20] hover:text-[#145218] font-medium">Tallenna</button>
+                                  <button onClick={() => handleSetDefaultRate(contract.id)} className="text-xs text-[#1B5E20] hover:text-[#145218] font-medium">Tallenna</button>
                                   <button onClick={() => { setEditingValueId(null); setEditValue(""); }} className="text-xs text-gray-400 hover:text-gray-600">Peruuta</button>
                                 </div>
                               ) : (

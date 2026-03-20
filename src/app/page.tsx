@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 
 export default function LoginPage() {
   const [name, setName] = useState("");
@@ -16,18 +17,15 @@ export default function LoginPage() {
       try {
         const u = JSON.parse(stored);
         if (u.name) {
-          fetch("/api/auth", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: u.name }),
-          })
-            .then((res) => {
-              if (res.ok) return res.json();
-              throw new Error();
-            })
+          api.login(u.name)
             .then((data) => {
-              localStorage.setItem("user", JSON.stringify(data));
-              router.push(data.role === "ADMIN" ? "/admin" : "/worker");
+              if (data) {
+                localStorage.setItem("user", JSON.stringify(data));
+                router.push(data.role === "ADMIN" ? "/admin" : "/worker");
+              } else {
+                localStorage.removeItem("user");
+                setChecking(false);
+              }
             })
             .catch(() => {
               localStorage.removeItem("user");
@@ -46,26 +44,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error);
+      const user = await api.login(name.trim());
+      if (!user) {
+        setError("Käyttäjää ei löydy. Pyydä adminia lisäämään profiilisi.");
         return;
       }
-
-      localStorage.setItem("user", JSON.stringify(data));
-
-      if (data.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/worker");
-      }
+      localStorage.setItem("user", JSON.stringify(user));
+      router.push(user.role === "ADMIN" ? "/admin" : "/worker");
     } catch {
       setError("Virhe kirjautumisessa. Yritä uudelleen.");
     } finally {

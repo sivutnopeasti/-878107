@@ -2,33 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-
-interface User {
-  id: number;
-  name: string;
-  role: string;
-}
-
-interface Contract {
-  id: number;
-  name: string;
-  description: string;
-  value: number | null;
-  contractType: string;
-  hourlyRates: Record<string, number>;
-  status: string;
-  workHours: WorkHourEntry[];
-}
-
-interface WorkHourEntry {
-  id: number;
-  hours: number;
-  date: string;
-  description: string;
-  workType: string;
-  contract: { id: number; name: string; value: number | null; contractType: string; hourlyRates: Record<string, number> };
-  user: { id: number; name: string };
-}
+import { api, User, Contract, WorkHourEntry } from "@/lib/api";
 
 export default function WorkerPage() {
   const router = useRouter();
@@ -49,14 +23,12 @@ export default function WorkerPage() {
   const [editWorkType, setEditWorkType] = useState<"CUSTOMER" | "INTERNAL">("CUSTOMER");
 
   const fetchMyHours = useCallback(async (userId: number) => {
-    const res = await fetch(`/api/workhours?userId=${userId}`);
-    setMyHours(await res.json());
+    setMyHours(await api.getWorkHours(userId));
   }, []);
 
   const fetchContracts = useCallback(async () => {
-    const res = await fetch("/api/contracts");
-    const data = await res.json();
-    setContracts(data.filter((c: Contract) => c.status === "ACTIVE"));
+    const data = await api.getContracts();
+    setContracts(data.filter((c) => c.status === "ACTIVE"));
   }, []);
 
   useEffect(() => {
@@ -74,19 +46,15 @@ export default function WorkerPage() {
     setError(""); setMessage("");
     if (!selectedContract || !hours || !date) { setError("Täytä kaikki kentät"); return; }
     try {
-      const res = await fetch("/api/workhours", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user!.id,
-          contractId: Number(selectedContract),
-          hours: Number(hours),
-          date,
-          description,
-          workType,
-        }),
+      const result = await api.createWorkHour({
+        userId: user!.id,
+        contractId: Number(selectedContract),
+        hours: Number(hours),
+        date,
+        description,
+        workType,
       });
-      if (!res.ok) { setError((await res.json()).error); return; }
+      if (result.error) { setError(result.error); return; }
       setMessage("Työtunnit lisätty!");
       setHours(""); setDescription("");
       setTimeout(() => setMessage(""), 3000);
@@ -97,7 +65,7 @@ export default function WorkerPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Haluatko varmasti poistaa tämän tuntimerkinnän?")) return;
-    await fetch(`/api/workhours?id=${id}`, { method: "DELETE" });
+    await api.deleteWorkHour(id);
     fetchMyHours(user!.id);
     fetchContracts();
   };
@@ -107,21 +75,16 @@ export default function WorkerPage() {
     setEditHours(String(h.hours));
     setEditDate(h.date);
     setEditDescription(h.description);
-    setEditWorkType(h.workType as "CUSTOMER" | "INTERNAL");
+    setEditWorkType(h.workType);
   };
 
   const handleSaveEdit = async () => {
     if (!editingId) return;
-    await fetch("/api/workhours", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: editingId,
-        hours: Number(editHours),
-        date: editDate,
-        description: editDescription,
-        workType: editWorkType,
-      }),
+    await api.updateWorkHour(editingId, {
+      hours: Number(editHours),
+      date: editDate,
+      description: editDescription,
+      workType: editWorkType,
     });
     setEditingId(null);
     fetchMyHours(user!.id);
@@ -139,7 +102,7 @@ export default function WorkerPage() {
     const allContractData = contracts.find((c) => c.id === contract.id);
     const allHours = allContractData?.workHours
       .filter((h) => h.workType === "CUSTOMER")
-      .reduce((sum: number, h: { hours: number }) => sum + h.hours, 0) || 0;
+      .reduce((sum, h) => sum + h.hours, 0) || 0;
     if (allHours === 0) return null;
     return contract.value / allHours;
   };
